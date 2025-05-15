@@ -20,6 +20,4 @@ jobs:
     - name: Run the app
       run: |
         npm run build
-        npm install -g serve
-        serve -s build
       working-directory: ./first-app
