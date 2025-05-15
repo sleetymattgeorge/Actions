@@ -18,5 +18,5 @@ jobs:
       working-directory: ./first-app
 
     - name: Run the app
-      run: npm start
+      run: npm run build
       working-directory: ./first-app
