@@ -18,5 +18,8 @@ jobs:
       working-directory: ./first-app
 
     - name: Run the app
-      run: npm run build
+      run: |
+        npm run build
+        npm install -g serve
+        serve -s build
       working-directory: ./first-app
