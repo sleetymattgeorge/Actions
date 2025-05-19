@@ -1,0 +1,52 @@
+name: terraform cicd
+defaults:
+  run:
+    working-directory: {{whatever directory with terraform scripts}}
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+jobs:
+  terraform:
+    name: "terraform deploy"
+    runs-on: ubuntu-latest
+
+    env:
+      AWS_REGION: 'ap-south-1'
+      TF_VERSION: '1.4.0'
+
+    steps:
+    - name: 'Checkout Github Repo'
+      uses: actions/checkout@v2
+
+    - name: 'configure AWS credentials'
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: 'Setup Terraform'
+      uses: hashicorp/setup-terraform@v1
+      with:
+        terraform_version: ${{ env.TF_VERSION }}
+
+    - name: 'Terraform Init'
+      id: init
+      run: terraform init
+
+    - name: 'Terraform Validate'
+      id: validate
+      run: terraform validate
+
+    - name: 'Terraform Plan'
+      id: plan
+      run: terraform plan -out=tfplan
+
+    - name: 'Terraform Apply'
+      if: github.ref == 'refs/heads/master'
+      id: apply
+      run: terraform apply -auto-approve tfplan
