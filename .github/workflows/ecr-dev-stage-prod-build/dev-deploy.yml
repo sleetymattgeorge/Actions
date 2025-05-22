@@ -5,7 +5,7 @@ on:
     branches:
       - dev
     paths:
-      - app-repo/**
+      - foldername/**
 jobs:
   deploy-dev:
     runs-on: ubuntu-latest
