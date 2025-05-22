@@ -2,10 +2,10 @@ name: test CI
 on:
     push:
         branches:
-        - main
+        - {{branch_name}}
     pull_request:
         branches:
-        - main
+        - {{branch_name}}
 jobs:
     test:
         runs-on: ${{ matrix.os }}
