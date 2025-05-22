@@ -1,0 +1,43 @@
+name: Deploy to Stage
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - app-repo/**
+
+jobs:
+  deploy-stage:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app-repo
+
+    env:
+      ECR_REPO_URI: ${{ secrets.ECR_REPO_URI }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to ECR and build image
+        run: |
+          aws ecr get-login-password | docker login --username AWS --password-stdin $ECR_REPO_URI
+          IMAGE_TAG=stage-${GITHUB_SHA}
+          docker build -t $ECR_REPO_URI:$IMAGE_TAG .
+          docker push $ECR_REPO_URI:$IMAGE_TAG
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+
+      - name: Make deploy.sh executable
+        run: chmod +x ./deploy.sh
+
+      - name: Run deploy script
+        run: ./deploy.sh stage $ECR_REPO_URI:$IMAGE_TAG

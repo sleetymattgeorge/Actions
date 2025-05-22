@@ -1,0 +1,47 @@
+name: production deployment workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      stage_image_tag:
+        description: 'ecr-stage-image-tag (e.g., stage-xxxx)'
+        required: true
+
+jobs:
+  promote-prod:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app-repo
+
+    env:
+      ECR_REPO_URI: ${{ secrets.ECR_REPO_URI }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to ECR
+        run: |
+          aws ecr get-login-password | docker login --username AWS --password-stdin $ECR_REPO_URI
+
+      - name: Pull and tag staging image as prod
+        run: |
+          docker pull $ECR_REPO_URI:${{ github.event.inputs.stage_image_tag }}
+          IMAGE_TAG=prod-${{ github.sha }}
+          docker tag $ECR_REPO_URI:${{ github.event.inputs.stage_image_tag }} $ECR_REPO_URI:$IMAGE_TAG
+          docker push $ECR_REPO_URI:$IMAGE_TAG
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+
+      - name: Make deploy.sh executable
+        run: chmod +x ./deploy.sh
+
+      - name: Deploy to Production
+        run: ./deploy.sh prod $ECR_REPO_URI:$IMAGE_TAG
