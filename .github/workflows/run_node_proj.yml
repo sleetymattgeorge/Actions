@@ -2,10 +2,14 @@ name: test CI
 on:
     push:
         branches:
-        - {{branch_name}}
+        - branchname
+        paths:
+        - first-app/**
     pull_request:
         branches:
-        - {{branch_name}}
+        - branchname
+        paths:
+        - first-app/**
 jobs:
     test:
         runs-on: ${{ matrix.os }}
